@@ -1,7 +1,9 @@
 //! tests/health_check.rs
 use newsletter::configuration::{DatabaseSettings, get_configuration};
+use newsletter::email_client::EmailClient;
 use newsletter::startup::run;
 use newsletter::telemetry::{get_subscriber, init_subscriber};
+use reqwest::Url;
 use secrecy::Secret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
@@ -104,8 +106,38 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
     }
 }
 
-// Launch our application in the background ~somehow~
+#[tokio::test]
+// Renamed!
+async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
+    // Arrange
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+    let test_cases = vec![
+        ("name=&email=ursula_le_guin%40gmail.com", "empty name"),
+        ("name=Ursula&email=", "empty email"),
+        ("name=Ursula&email=definitely-not-an-email", "invalid email"),
+    ];
+    for (body, description) in test_cases {
+        // Act
+        let response = client
+            .post(&format!("{}/subscriptions", &app.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request.");
+        // Assert
+        assert_eq!(
+            // Not 200 anymore!
+            400,
+            response.status().as_u16(),
+            "The API did not return a 400 Bad Request when the payload was {}.",
+            description
+        );
+    }
+}
 
+// Launch our application in the background ~somehow~
 // The function is asynchronous now!
 async fn spawn_app() -> TestApp {
     // The first time `initialize` is invoked the code in `TRACING` is executed.
@@ -118,7 +150,23 @@ async fn spawn_app() -> TestApp {
     let mut configuration = get_configuration().expect("Failed to read configuration.");
     configuration.database.database_name = Uuid::new_v4().to_string();
     let connection_pool = configure_database(&configuration.database).await;
-    let server = run(listener, connection_pool.clone()).expect("Failed to bind address");
+
+    // Build a new email client
+    let sender_email = configuration
+        .email_client
+        .sender()
+        .expect("Invalid sender email address.");
+    let base_url = Url::parse(&configuration.email_client.base_url).expect("Invalid base URL.");
+    let timeout = configuration.email_client.timeout();
+    let email_client = EmailClient::new(
+        base_url,
+        sender_email, // Pass argument from configuration
+        configuration.email_client.authorization_token,
+        timeout,
+    );
+    // Pass the new client to `run`!
+    let server =
+        run(listener, connection_pool.clone(), email_client).expect("Failed to bind address");
     let _ = tokio::spawn(server);
     TestApp {
         address,

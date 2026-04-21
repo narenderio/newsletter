@@ -11,7 +11,7 @@ databases:
   # PG = Postgres
   - engine: PG
     # Database name
-    name: newsletter-db
+    name: newsletterdb
     # Again, let's keep the bill lean
     num_nodes: 1
     size: db-s-dev-database
@@ -50,16 +50,16 @@ services:
     envs:
       - key: APP_DATABASE__USERNAME
         scope: RUN_TIME
-        value: ${newsletter-db.USERNAME}
+        value: ${newsletterdb.USERNAME}
       - key: APP_DATABASE__PASSWORD
         scope: RUN_TIME
-        value: ${newsletter-db.PASSWORD}
+        value: ${newsletterdb.PASSWORD}
       - key: APP_DATABASE__HOST
         scope: RUN_TIME
-        value: ${newsletter-db.HOSTNAME}
+        value: ${newsletterdb.HOSTNAME}
       - key: APP_DATABASE__PORT
         scope: RUN_TIME
-        value: ${newsletter-db.PORT}
+        value: ${newsletterdb.PORT}
       - key: APP_DATABASE__DATABASE_NAME
         scope: RUN_TIME
-        value: ${newsletter-db.DATABASE}
+        value: ${newsletterdb.DATABASE}
