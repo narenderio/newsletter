@@ -4,3 +4,5 @@ mod helpers;
 mod subscriptions;
 // New module!
 mod subscriptions_confirm;
+// New test module!
+mod newsletter;

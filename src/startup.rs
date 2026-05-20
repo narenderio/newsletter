@@ -1,9 +1,12 @@
 use crate::email_client::EmailClient;
-use crate::routes::{confirm, health_check, subscribe};
+use crate::routes::home;
+
+use crate::routes::{confirm, health_check, login, login_form, publish_newsletter, subscribe};
 use actix_web::dev::Server;
 use actix_web::web::Data;
 use actix_web::{App, HttpServer, web};
 use reqwest::Url;
+use secrecy::Secret;
 use sqlx::PgPool;
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
@@ -49,6 +52,7 @@ impl Application {
             email_client,
             // New parameter!
             configuration.application.base_url,
+            configuration.application.hmac_secret,
         )?;
 
         // We "save" the bound port in one of `Application`'s fields
@@ -80,6 +84,7 @@ pub fn run(
     email_client: EmailClient,
     // New parameter!
     base_url: String,
+    hmac_secret: Secret<String>,
 ) -> Result<Server, std::io::Error> {
     let base_url = Data::new(ApplicationBaseUrl(base_url));
     let db_pool = Data::new(db_pool);
@@ -90,11 +95,19 @@ pub fn run(
             .route("/health_check", web::get().to(health_check))
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
+            .route("/newsletters", web::post().to(publish_newsletter))
+            .route("/", web::get().to(home))
+            .route("/login", web::get().to(login_form))
+            .route("/login", web::post().to(login))
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
+            .app_data(Data::new(HmacSecret(hmac_secret.clone())))
     })
     .listen(listener)?
     .run();
     Ok(server)
 }
+
+#[derive(Clone)]
+pub struct HmacSecret(pub Secret<String>);

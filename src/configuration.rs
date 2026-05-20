@@ -39,6 +39,7 @@ pub struct ApplicationSettings {
     pub host: String,
     // New field!
     pub base_url: String,
+    pub hmac_secret: Secret<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]
