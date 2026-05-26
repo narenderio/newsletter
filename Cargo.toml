@@ -18,7 +18,6 @@ actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"]}
 config = "0.14"
-uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4.22", default-features = false, features = ["clock"] }
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
@@ -41,6 +40,9 @@ htmlescape = "0.3"
 hmac = { version = "0.12", features = ["std"] }
 sha2 = "0.10"
 hex = "0.4"
+actix-web-flash-messages = { version = "0.5", features = ["cookies"] }
+actix-session = { version = "0.10", features = ["redis-session-rustls"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 
 [dependencies.sqlx]
 version = "0.8"
@@ -54,12 +56,11 @@ features = [
     "migrate"
 ]
 
+# Using multi-line format for brevity
 [dependencies.reqwest]
 version = "0.12"
 default-features = false
-# We need the `json` feature flag to serialize/deserialize JSON payloads
-features = ["json", "rustls-tls"]
-
+features = ["json", "rustls-tls", "cookies"]
 
 [dev-dependencies]
 claims = "0.7"
