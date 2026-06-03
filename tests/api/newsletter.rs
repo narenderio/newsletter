@@ -3,14 +3,13 @@ use fake::Fake;
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use std::time::Duration;
-use wiremock::MockBuilder;
 use wiremock::matchers::{any, method, path};
 use wiremock::{Mock, ResponseTemplate};
 
 // Short-hand for a common mocking setup
-fn when_sending_an_email() -> MockBuilder {
-    Mock::given(path("/email")).and(method("POST"))
-}
+// fn when_sending_an_email() -> MockBuilder {
+//     Mock::given(path("/email")).and(method("POST"))
+// }
 
 async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
     // We are working with multiple subscribers now,
